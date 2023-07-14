@@ -1,0 +1,292 @@
+Overview
+
+The primary challenge in this problem is to find an efficient way to get a subsequence such that Bitwise And of all its element is equal to K.
+
+In the following three approaches,  we will be observing three different ways to solve the problem.
+
+Approach 1: Brute Force
+
+Intuition
+
+Check all non-empty subsequence one by one to see if bitwise AND of all its element is equal to K or not.
+
+Algorithm
+
+For every element in the array, there are two choices, either to include it in the subsequence or not include it. Apply this for every element in the array starting from index 0 until we reach the last index. Once the last index is reached, do Bitwise AND of all the element of subsequence generated, return TRUE if it is equal to K else continue to next subsequence.
+
+Code
+
+C++ 
+
+#include <bits/stdc++.h>
+using namespace std;
+
+class Solution
+{
+public:
+    // Recursive function to get all
+    // possible subsequences for given array
+    void getSubsequence(vector<int> &nums, int ind, vector<int> &arr, int n, bool &check, int &k)
+    {
+
+        // Check the subsequence when reach
+        // the leaf of recursion tree
+        if (ind == n)
+        {
+
+            if (arr.size() != 0)
+            {
+                int bit_and = arr[0];
+
+                for (int i = 1; i < n; i++)
+                {
+                    bit_and &= arr[i];
+                }
+
+                if (bit_and == k)
+                {
+                    check = true;
+                }
+            }
+
+            return;
+        }
+        else
+        {
+
+            // pick the current index into the subsequence.
+            arr.push_back(nums[ind]);
+
+            if (check == false)
+                getSubsequence(nums, ind + 1, arr, n, check, k);
+
+            arr.pop_back();
+
+            // not picking the element into the subsequence.
+            if (check == false)
+                getSubsequence(nums, ind + 1, arr, n, check, k);
+        }
+    }
+
+    bool check_bit_and(vector<int> &nums, int k)
+    {
+        bool check = false;
+        int n = nums.size();
+        vector<int> arr;
+        getSubsequence(nums, 0, arr, n, check, k);
+        return check;
+    }
+};
+
+Complexity Analysis
+
+Time Complexity
+
+O(2^n) , because we generated all the subsequence of array
+
+Space Complexity 
+
+O(n) , because we stored all the elements in new array and also because of the recursion stack
+
+
+Approach 2 : Bit Manipulation and Dynamic Programming
+
+Intuition
+
+Generate the binary form of all the element of array and the given value k and check whether it is possible to get the value k by removing few elements of array  by atleast keeping one.
+
+Algorithm
+
+Firstly, generate the binary form of given value k using an array of size 32 because as per constraints the max value will be 2^30. 
+Similarly generate the binary form of each element of given array.
+Then start removing the elements that cannot be used to generate the value k. 
+Like, if the bit of K is set, we will remove all the elements having same bit unset.
+And if bit of k is unset, we will check if there exist atleast a single elment whose same bit is unset to ensure that we will get a unset bit in our final value for same index.
+At last, confirm if there remains atleast one element that can used to generate the value K, if so return TRUE , else return FALSE.
+
+Code
+
+C++ 
+
+class Solution
+{
+public:
+    bool solve(vector<int> &nums, int k, int n)
+    {
+
+        // generate the binary form of given value k
+        //  using an array of size 32 because as per constraints
+        //  the max value will be 2^30
+        vector<int> k_bits(32);
+        int ind = 0;
+        while (k)
+        {
+            k_bits[ind] = k % 2;
+            k /= 2;
+            ind++;
+        }
+
+        // similarly generate the binary form of each element of given array.
+        vector<vector<int>> n_bit(n, vector<int>(32, 0));
+        for (int i = 0; i < n; i++)
+        {
+            ind = 0;
+            while (nums[i])
+            {
+                n_bit[i][ind] = nums[i] % 2;
+                nums[i] /= 2;
+                ind++;
+            }
+        }
+
+        // create an array to check whether we can use current element of array or not.
+        vector<int> can_visit(n, 1);
+
+        // Bitwise AND of set and unset bit is unset, so if any bit of k is set, then we need to remove all those element from array whose current bit is unset.
+        for (int i = 0; i < 32; i++)
+        {
+            if (k_bits[i] == 1)
+            {
+                for (int j = 0; j < n; j++)
+                {
+                    if (can_visit[j] == 1 && n_bit[j][i] == 0)
+                    {
+                        can_visit[j] = 0;
+                    }
+                }
+            }
+        }
+
+        // Now for unset bit of k, we need to ensure that there exist atleast single element in array whose similar bit is unset
+        for (int i = 0; i < 32; i++)
+        {
+            if (k_bits[i] == 0)
+            {
+                bool found = false;
+                for (int j = 0; j < n; j++)
+                {
+                    if (can_visit[j] && n_bit[j][i] == 0)
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+                if (found == false)
+                {
+                    return false;
+                }
+            }
+        }
+
+        // now after all the operations, check whether there
+        //  exist atleast a single element of array which
+        //  can be used to generate the value k
+        for (int i = 0; i < n; i++)
+        {
+            if (can_visit[i] == 1)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool check_bit_and(vector<int> &nums, int k)
+    {
+        int n = nums.size();
+        bool ans = solve(nums, k, n);
+        return ans;
+    }
+};
+
+Complexity Analysis
+
+Time Complexity
+
+O(logK + n*log(nums[i]) + n*32 + n*32 + n) =~ O(n)
+Here logK is due to calculation of binary form of k, similarly n*log(nums[i]) is due to calculation of binary form of each element.
+Thereafter n*32 is here because we have traversed the array for each 32 bits.
+And in last n is due to traversal of can_visit array. So, overall it will n+logk ~ n.
+
+Space Complexity
+
+O(32 + n*32 + n) =~ O(n)
+Here, 32 is of k_bits, n*32 is of all elements of array and n is of can_visit array.
+Overall, it is O(n).
+
+
+Approach 3: Bitwise AND Property (Optimum Approach)
+
+Intuition
+
+First, recall the following property of bitwise AND:
+If x & y = z, then x & z = z and y & z = z.
+
+That is, if x & y = z , then both x and y will be supermasks of z (meaning any bit set in z will also be set in x and y).
+
+This of course extends to the bitwise AND of several values as well:
+If x1 & x2 & x3 &..... xn = y, then each xi will be a supermask of y.
+
+Approach
+
+Let’s look at the above property from the perspective of the problem we want to solve.
+We want to figure out whether there’s a subsequence of nums such that its bitwise AND equals K.
+That is, we want to know whether there exist indices 1<= i1 < i2 < ... <ik <= N such that nums[i1] & nums[i2] & nums[i3] & .... &nums[in] = K .
+Immediately, the first property tells us that each nums[i] will be supermask of k.
+So, we only care about those values in nums[i] that are supermasks of k.
+
+Let S be the set of valuse in nums that are supermasks of k.
+Then, if fact S is the subsequence we're looking for.
+That is, if the bitwise AND of the vaues in S equals K, the answer is TRUE, otherwise FALSE.
+
+Code 
+
+C++
+
+class Solution
+{
+public:
+    bool solve(vector<int> &nums, int k, int n)
+    {
+
+        // c will be storing Bitwise AND of supermasks of K.
+        int res_and = INT_MAX;
+        int count = 0;
+        for (int i = 0; i < n; i++)
+        {
+            if (nums[i] & k == k)
+            {
+                res_and = res_and & nums[i];
+                count++;
+            }
+        }
+
+        // check whether the AND obtained is equal or not to k.
+        if (res_and == k && count > 0)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    bool check_bit_and(vector<int> &nums, int k)
+    {
+        int n = nums.size();
+        bool ans = solve(nums, k, n);
+        return ans;
+    }
+};
+
+
+Complexity Analysis
+
+Time Complexity 
+
+O(n), because we traversed the array only once.
+
+Space Complexity
+
+O(1), because we are using only constant space, irrespective of inputs.

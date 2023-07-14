@@ -1,0 +1,3 @@
+I faced this problem at CodeChef's coding contest. This one is quite tricky to solve and it took me around 40 mins to solve this problem.
+I want to contribute this question because I not found this problem over Leetcode and more over to it, I think this problem is quite mind juggling and contains various ways to solve it. One can solve this problem using brute force and better would be to solve it using bit maipulation and dynamic programming and the most optimum one will be to solve it using a property of Bitwise And.
+To solve this question, user must have knowledge of bit manipulation, dp and Bitwise And Operator, so I think this question should be a LeetCode Medium.
